@@ -1,0 +1,22 @@
+
+version: '2.1'
+
+
+services:
+
+  prometheus-pushgateway:
+    image: prom/pushgateway
+    container_name: pushgateway
+    restart: unless-stopped
+    expose:
+      - 9091
+    ports:
+      - "9091:9091"
+
+  backup-container:
+    build: ../borg-backup-docker
+    volumes:
+      - ./prod_folder:/prod/
+      - ./backup_folder/:/backup
+    environment:
+      - BORG_BACKUP_CRON=*/5 * * * *
