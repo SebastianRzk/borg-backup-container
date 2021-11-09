@@ -38,7 +38,8 @@ The complete configuration can be done via environment variables.
 
 | name | type | description |
 |------|------|-------------|
-|example-project_backup-container|Gauge|Number of snapshots in borg repository.|
+|instance|Info|Instance name (provided via env) or hostname|
+|borg_number_of_backups|Gauge|Number of snapshots in borg repository.|
 |borg_first_backup_timestamp|Gauge|Timestamp of first snapshot in repository.|
 |borg_last_backup_timestamp|Gauge|Timestamp of last snapshot in repository|
 |borg_backup_folder_size|Gauge|Size of the borg backup repository folder.|
