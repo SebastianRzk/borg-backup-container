@@ -33,3 +33,16 @@ The complete configuration can be done via environment variables.
 |BORG_PROMETHEUS_PUSHGATEWAY_JOBNAME| push-borg | jobname that will be pushed to the prometheus gateway |
 |BORG_INSTANCE_NAME| hostname | instance name that is pushed to the prometheus gateway |
 
+
+## Prometheus metrics
+
+| name | type | description |
+|------|------|-------------|
+|example-project_backup-container|Gauge|Number of snapshots in borg repository.|
+|borg_first_backup_timestamp|Gauge|Timestamp of first snapshot in repository.|
+|borg_last_backup_timestamp|Gauge|Timestamp of last snapshot in repository|
+|borg_backup_folder_size|Gauge|Size of the borg backup repository folder.|
+|borg_production_folder_size|Gauge|Size of the production folder|
+|borg_create_backup_time|Summary|Seconds used to create the backup.|
+|borg_prune_backup_time|Summary|Seconds used to prune the backup.|
+

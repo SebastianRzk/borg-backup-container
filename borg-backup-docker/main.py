@@ -136,13 +136,13 @@ def create_info(registry):
     first_backup = Gauge('borg_first_backup_timestamp', 'Timestamp of first snapshot in repository.', registry=registry)
     first_backup.set( datetime.fromisoformat(borg_info['archives'][0]['time']).timestamp())
 
-    last_backup = Gauge('borg_last_backup_timestamp', 'Timestamp of last snapshot in repository', registry=registry)
+    last_backup = Gauge('borg_last_backup_timestamp', 'Timestamp of last snapshot in repository.', registry=registry)
     last_backup.set(datetime.fromisoformat(borg_info['archives'][-1]['time']).timestamp())
 
     backup_size = Gauge('borg_backup_folder_size', 'Size of the borg backup repository folder.', registry=registry)
     backup_size.set(get_folder_size(backup_path()))
 
-    prodcution_size = Gauge('borg_production_folder_size', 'Size of the production folder', registry=registry)
+    prodcution_size = Gauge('borg_production_folder_size', 'Size of the production folder.', registry=registry)
     prodcution_size.set(get_folder_size(prod_path()))
 
 
@@ -163,8 +163,8 @@ if __name__ == "__main__":
     registry = CollectorRegistry()
     i = Info('instance', instance_name(), registry=registry)
 
-    time_command('borg_create_backup_time', 'seconds used to create the backup.', create_backup, registry)
-    time_command('borg_prune_backup_time', 'seconds used to prune the backup.', prune_backup, registry)
+    time_command('borg_create_backup_time', 'Seconds used to create the backup.', create_backup, registry)
+    time_command('borg_prune_backup_time', 'Seconds used to prune the backup.', prune_backup, registry)
 
     if is_push_enabled():
         create_info(registry)
