@@ -35,8 +35,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v2
         with:
-          context: ./ 
-          file: ./borg-backup-docker/Dockerfile
+          context: ./borg-backup-docker
+          file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: ushamandya/simplewhale:latest
