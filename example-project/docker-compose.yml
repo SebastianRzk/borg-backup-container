@@ -16,7 +16,7 @@ services:
   backup-container:
     build: ../borg-backup-docker
     volumes:
-      - ./prod_folder:/prod/
-      - ./backup_folder/:/backup
+      - ./prod_folder:/prod
+      - ./backup_folder:/backup
     environment:
       - BORG_BACKUP_CRON=*/5 * * * *
