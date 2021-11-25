@@ -53,3 +53,10 @@ The complete configuration can be done via environment variables.
 |borg_create_backup_time|Summary|Seconds used to create the backup.|
 |borg_prune_backup_time|Summary|Seconds used to prune the backup.|
 
+Example PromQL for backup monitoring:
+
+Metric on the last of backup. Can alert if no new backups are created anymore:
+
+    time() - (borg_last_backup_timestamp{})
+
+
