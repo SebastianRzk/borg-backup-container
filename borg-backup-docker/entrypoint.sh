@@ -12,5 +12,5 @@ $BORG_BACKUP_CRON python3 /main.py >> /backup/last.log 2>&1
 # This extra line makes it a valid cron" > scheduler.txt
 
 crontab scheduler.txt
-cron -f
+crond -f
 

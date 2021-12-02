@@ -1,9 +1,9 @@
-FROM python:3-slim-bullseye
+FROM alpine
 
 ENV BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
-RUN apt-get update && apt-get install borgbackup cron --yes && apt clean
 COPY requirements.txt /requirements.txt
-RUN pip3 install -r /requirements.txt
+RUN apk add python3 py3-pip borgbackup bash openrc busybox-initscripts && pip3 install -r /requirements.txt
+RUN rc-update add crond
 COPY main.py /main.py
 ADD entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
