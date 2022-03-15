@@ -93,21 +93,37 @@ def password():
 
 def create_backup():
     param_backup_destination = '{}::{}'.format(backup_path(), backup_name())
-    result = subprocess.call(['borg', 'create', param_backup_destination,  prod_path()])
+    command = ['borg', 'create', param_backup_destination,  prod_path()]
+    print(command)
+    result = subprocess.call(command)
     return result == 0
 
 
+def keep_daily_param():
+    return '--keep-daily={}'.format(backup_keep_daily())
+
+
+def keep_weekly_param():
+    return '--keep-weekly={}'.format(backup_keep_weekly())
+
+
 def prune_backup():
-    result = subprocess.call(['borg', 'prune', '-v', '--list', '--keep-daily=7', '--keep-weekly=4', backup_path()])
+    command = ['borg', 'prune', '-v', '--list', keep_daily_param(), keep_weekly_param(), backup_path()]
+    print(command)
+    result = subprocess.call(command)
     return result == 0
 
 
 def init_backup():
-    subprocess.call(['borg', 'init', '--encryption=none', backup_path()])
+    command = ['borg', 'init', '--encryption=none', backup_path()]
+    print(command)
+    subprocess.call(command)
 
 
 def get_info():
-    borg_info = subprocess.run(['borg list ' + backup_path() + ' --json'], shell=True, stdout=subprocess.PIPE)
+    command = ['borg list ' + backup_path() + ' --json']
+    print(command)
+    borg_info = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
     return json.loads(borg_info.stdout)
 
 
