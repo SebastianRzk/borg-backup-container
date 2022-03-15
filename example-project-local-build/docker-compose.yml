@@ -14,7 +14,7 @@ services:
       - "9091:9091"
 
   backup-container:
-    image: sebastianrzk/borg-backup-container
+    build: ../borg-backup-docker
     volumes:
       - ./prod_folder:/prod
       - ./backup_folder:/backup
