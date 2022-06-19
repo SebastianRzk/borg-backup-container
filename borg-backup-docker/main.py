@@ -9,6 +9,9 @@ from datetime import datetime
 BORG_BACKUP_BACKUP_PATH_NAME = 'BORG_BACKUP_BACKUP_PATH'
 BORG_BACKUP_BACKUP_PATH_DEFAULT = '/backup/borg_backup/'
 
+BORG_BACKUP_AUTO_REPO_INIT_ENABLED = 'BORG_BACKUP_AUTO_REPO_INIT_ENABLED'
+BORG_BACKUP_AUTO_REPO_INIT_ENABLED_DEFAULT = 'yes'
+
 BORG_BACKUP_PROD_PATH_NAME = 'BORG_BACKUP_PROD_PATH'
 BORG_BACKUP_PROD_PATH_DEFAULT = '/prod/'
 
@@ -73,6 +76,10 @@ def instance_name():
 
 def is_push_enabled():
     return get_or_default(BORG_PROMETHEUS_PUSHGATEWAY_ENABLED_NAME, BORG_PROMETHEUS_PUSHGATEWAY_ENABLED_DEFAULT) == 'yes'
+
+
+def is_init_enabled():
+    return get_or_default(BORG_BACKUP_AUTO_REPO_INIT_ENABLED, BORG_BACKUP_AUTO_REPO_INIT_ENABLED_DEFAULT) == 'yes'
 
 
 def jobname():
@@ -175,7 +182,8 @@ def time_command(name, description, command, registry):
 
 if __name__ == "__main__":
     print('started')
-    init_backup()
+    if is_init_enabled():
+        init_backup()
     registry = CollectorRegistry()
     i = Info('instance', instance_name(), registry=registry)
 
