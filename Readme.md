@@ -17,23 +17,27 @@ The complete configuration can be done via environment variables.
 
 ### Initial repository creation
 
-| parameter                          | default value | explanation                                                                                                                                                                                                                                                                                                                   |
-|------------------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| BORG_BACKUP_AUTO_REPO_INIT_ENABLED | yes           | If the "yes" parameter is set, the backup container tries to create a new repository each time it is run. If a repository already exists, nothing happens. If you want an error if the repository doesn't exist (e.g. on an external mount that isn't currently available), set this to something other than yes, e.g. "no"   |
+| parameter                          | default value | explanation                                                                                                                                                                                                                                                                                                                 |
+|------------------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| BORG_BACKUP_AUTO_REPO_INIT_ENABLED | yes           | If the "yes" parameter is set, the backup container tries to create a new repository each time it is run. If a repository already exists, nothing happens. If you want an error if the repository doesn't exist (e.g. on an external mount that isn't currently available), set this to something other than yes, e.g. "no" |
+| BORG_BACKUP_ENCRYPTION_PASSPHRASE  |               | If some passphrase is set, the repository gets created with encryption `repokey` and the provided passphrase                                                                                                                                                                                                                |
 
 ### Backup data
 
-| parameter                 | default value                     | explanation                                                     |
-|---------------------------|-----------------------------------|-----------------------------------------------------------------|
-| BORG_BACKUP_CRON          | none                              | cron that triggers the backup+pruning process. E.g. */5 * * * * | 
-| BORG_BACKUP_SNAPSHOT_NAME | automatic-{now:%Y-%m-%dT%H:%M:%S} | the name of each snapshot created by the cron                   |
+| parameter                         | default value                     | explanation                                                                                                                               |
+|-----------------------------------|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| BORG_BACKUP_CRON                  | none                              | cron that triggers the backup+pruning process. E.g. */5 * * * *                                                                           | 
+| BORG_BACKUP_SNAPSHOT_NAME         | automatic-{now:%Y-%m-%dT%H:%M:%S} | the name of each snapshot created by the cron                                                                                             |
+| BORG_BACKUP_ENCRYPTION_PASSPHRASE |                                   | The passphrase for accessing the repository (encrpytion mode `repokey`). If nothing set (default), the repo is acessed without encryption |
 
 ### Prune data
 
-| parameter              | default value | explanation                                                                                                             |
-|------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------|
-| BORG_PRUNE_KEEP_DAILY  | 7             | daily backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)  | 
-| BORG_PRUNE_KEEP_WEEKLY | 4             | weekly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html) | 
+| parameter                          | default value | explanation                                                                                                                               |
+|------------------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| BORG_PRUNE_KEEP_DAILY              | 7             | daily backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                    | 
+| BORG_PRUNE_KEEP_WEEKLY             | 4             | weekly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                   | 
+| BORG_BACKUP_ENCRYPTION_PASSPHRASE  |               | The passphrase for accessing the repository (encrpytion mode `repokey`). If nothing set (default), the repo is acessed without encryption |
+
 
 ### Push metrics to prometheus push gateway
 

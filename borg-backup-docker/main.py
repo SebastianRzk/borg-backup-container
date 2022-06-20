@@ -12,6 +12,9 @@ BORG_BACKUP_BACKUP_PATH_DEFAULT = '/backup/borg_backup/'
 BORG_BACKUP_AUTO_REPO_INIT_ENABLED = 'BORG_BACKUP_AUTO_REPO_INIT_ENABLED'
 BORG_BACKUP_AUTO_REPO_INIT_ENABLED_DEFAULT = 'yes'
 
+BORG_BACKUP_ENCRYPTION_PASSPHRASE = 'BORG_BACKUP_ENCRYPTION_PASSPHRASE'
+BORG_BACKUP_ENCRYPTION_PASSPHRASE_DEFAULT = ''
+
 BORG_BACKUP_PROD_PATH_NAME = 'BORG_BACKUP_PROD_PATH'
 BORG_BACKUP_PROD_PATH_DEFAULT = '/prod/'
 
@@ -98,11 +101,22 @@ def password():
     return get_or_default(BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD_NAME, BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD_DEFAULT)
 
 
+def encryption_passphrase():
+    return get_or_default(BORG_BACKUP_ENCRYPTION_PASSPHRASE, BORG_BACKUP_ENCRYPTION_PASSPHRASE_DEFAULT)
+
+
+def call_in_borg_env(command):
+    if encryption_enabled():
+        print("call with BORG_PASSPHRASE set")
+        return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()), stderr=subprocess.)
+    return subprocess.call(command)
+
+
 def create_backup():
     param_backup_destination = '{}::{}'.format(backup_path(), backup_name())
     command = ['borg', 'create', param_backup_destination,  prod_path()]
     print(command)
-    result = subprocess.call(command)
+    result = call_in_borg_env(command)
     return result == 0
 
 
@@ -117,11 +131,32 @@ def keep_weekly_param():
 def prune_backup():
     command = ['borg', 'prune', '-v', '--list', keep_daily_param(), keep_weekly_param(), backup_path()]
     print(command)
-    result = subprocess.call(command)
+    result = call_in_borg_env(command)
     return result == 0
 
 
+def encryption_enabled():
+    print('encryption enabled', (not not encryption_passphrase()) and encryption_passphrase() != '')
+    print("passphrase", encryption_passphrase())
+    return (not not encryption_passphrase()) and encryption_passphrase() != ''
+
+
 def init_backup():
+    if encryption_enabled():
+        init_backup_encrypted()
+        return
+    init_backup_cleartext()
+
+
+def init_backup_encrypted():
+    print('try to init encrypted repo')
+    command = ['borg', 'init', '--encryption=repokey', backup_path()]
+    print(command)
+    subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
+
+
+def init_backup_cleartext():
+    print('try to init cleartext repo')
     command = ['borg', 'init', '--encryption=none', backup_path()]
     print(command)
     subprocess.call(command)
@@ -130,7 +165,15 @@ def init_backup():
 def get_info():
     command = ['borg list ' + backup_path() + ' --json']
     print(command)
-    borg_info = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+    if encryption_enabled():
+        borg_info = subprocess.run(
+            command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
+    else:
+        borg_info = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+
     return json.loads(borg_info.stdout)
 
 
@@ -181,7 +224,7 @@ def time_command(name, description, command, registry):
 
 
 if __name__ == "__main__":
-    print('started')
+    print('triggered by cron')
     if is_init_enabled():
         init_backup()
     registry = CollectorRegistry()
