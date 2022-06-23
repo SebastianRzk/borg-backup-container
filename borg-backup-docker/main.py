@@ -108,7 +108,7 @@ def encryption_passphrase():
 def call_in_borg_env(command):
     if encryption_enabled():
         print("call with BORG_PASSPHRASE set")
-        return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()), stderr=subprocess.)
+        return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
     return subprocess.call(command)
 
 
