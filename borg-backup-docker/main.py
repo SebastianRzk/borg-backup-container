@@ -137,7 +137,6 @@ def prune_backup():
 
 def encryption_enabled():
     print('encryption enabled', (not not encryption_passphrase()) and encryption_passphrase() != '')
-    print("passphrase", encryption_passphrase())
     return (not not encryption_passphrase()) and encryption_passphrase() != ''
 
 
