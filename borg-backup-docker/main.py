@@ -2,6 +2,7 @@ import subprocess
 import os
 import json
 import socket
+import logging
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway, Info, Summary
 from prometheus_client.exposition import basic_auth_handler
 from datetime import datetime
@@ -107,7 +108,7 @@ def encryption_passphrase():
 
 def call_in_borg_env(command):
     if encryption_enabled():
-        print("call with BORG_PASSPHRASE set")
+        logging.info("call with BORG_PASSPHRASE set")
         return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
     return subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
@@ -115,7 +116,7 @@ def call_in_borg_env(command):
 def create_backup():
     param_backup_destination = '{}::{}'.format(backup_path(), backup_name())
     command = ['borg', 'create', param_backup_destination,  prod_path()]
-    print(command)
+    logging.info('command %s', command)
     result = call_in_borg_env(command)
     return result == 0
 
@@ -130,13 +131,13 @@ def keep_weekly_param():
 
 def prune_backup():
     command = ['borg', 'prune', '-v', '--list', keep_daily_param(), keep_weekly_param(), backup_path()]
-    print(command)
+    logging.info('command %s', command)
     result = call_in_borg_env(command)
     return result == 0
 
 
 def encryption_enabled():
-    print('encryption enabled', (not not encryption_passphrase()) and encryption_passphrase() != '')
+    logging.info('encryption enabled %s', (not not encryption_passphrase()) and encryption_passphrase() != '')
     return (not not encryption_passphrase()) and encryption_passphrase() != ''
 
 
@@ -148,22 +149,22 @@ def init_backup():
 
 
 def init_backup_encrypted():
-    print('try to init encrypted repo')
+    logging.info('try to init encrypted repo')
     command = ['borg', 'init', '--encryption=repokey', backup_path()]
-    print(command)
+    logging.info('command %s', command)
     subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
 
 
 def init_backup_cleartext():
-    print('try to init cleartext repo')
+    logging.info('try to init cleartext repo')
     command = ['borg', 'init', '--encryption=none', backup_path()]
-    print(command)
+    logging.info('command %s', command)
     subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
 
 def get_info():
     command = ['borg list ' + backup_path() + ' --json']
-    print(command)
+    logging.info('command %s', command)
     if encryption_enabled():
         borg_info = subprocess.run(
             command,
@@ -226,7 +227,8 @@ def time_command(name, description, command, registry):
 
 
 if __name__ == "__main__":
-    print('triggered by cron')
+    logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
+    logging.info('triggered by cron')
     if is_init_enabled():
         init_backup()
     registry = CollectorRegistry()
@@ -238,4 +240,4 @@ if __name__ == "__main__":
     if is_push_enabled():
         create_info(registry)
         push_to_gateway(pushgateway(), job=jobname(), registry=registry, handler=auth_handler)
-    print('done')
+    logging.info('done')
