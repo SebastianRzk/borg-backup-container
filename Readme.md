@@ -39,13 +39,13 @@ An example can be found in the example-project folder.
 
 ### Prune data
 
-| parameter                         | default value | explanation                                                                                                                                                 |
-|-----------------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| BORG_PRUNE_KEEP_HOURLY            | <empty>       | hourly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                                     | 
-| BORG_PRUNE_KEEP_DAILY             | 7             | daily backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                                      | 
-| BORG_PRUNE_KEEP_WEEKLY            | 4             | weekly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                                     | 
-| BORG_PRUNE_KEEP_MONTHLY           | <empty>       | daily backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                                      | 
-| BORG_BACKUP_ENCRYPTION_PASSPHRASE |               | The passphrase for accessing the repository (encrpytion mode `repokey`). If nothing set (default), the repo is acessed without encryption                   |
+| parameter                         | default value | explanation                                                                                                                               |
+|-----------------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| BORG_PRUNE_KEEP_HOURLY            | <empty>       | hourly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                   | 
+| BORG_PRUNE_KEEP_DAILY             | 7             | daily backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                    | 
+| BORG_PRUNE_KEEP_WEEKLY            | 4             | weekly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                   | 
+| BORG_PRUNE_KEEP_MONTHLY           | <empty>       | monthly backups to be kept. See [borg prune documentation](https://borgbackup.readthedocs.io/en/stable/usage/prune.html)                  | 
+| BORG_BACKUP_ENCRYPTION_PASSPHRASE |               | The passphrase for accessing the repository (encrpytion mode `repokey`). If nothing set (default), the repo is acessed without encryption |
 
 
 ### Push metrics to prometheus push gateway
