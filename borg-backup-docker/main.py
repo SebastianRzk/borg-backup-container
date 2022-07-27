@@ -109,7 +109,7 @@ def call_in_borg_env(command):
     if encryption_enabled():
         print("call with BORG_PASSPHRASE set")
         return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
-    return subprocess.call(command)
+    return subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
 
 def create_backup():
@@ -158,7 +158,7 @@ def init_backup_cleartext():
     print('try to init cleartext repo')
     command = ['borg', 'init', '--encryption=none', backup_path()]
     print(command)
-    subprocess.call(command)
+    subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
 
 def get_info():
@@ -171,7 +171,10 @@ def get_info():
             stdout=subprocess.PIPE,
             env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
     else:
-        borg_info = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        borg_info = subprocess.run(command,
+                                   shell=True,
+                                   stdout=subprocess.PIPE,
+                                   env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
     return json.loads(borg_info.stdout)
 
