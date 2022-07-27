@@ -2,6 +2,7 @@ import subprocess
 import os
 import json
 import socket
+import logging
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway, Info, Summary
 from prometheus_client.exposition import basic_auth_handler
 from datetime import datetime
@@ -18,11 +19,17 @@ BORG_BACKUP_ENCRYPTION_PASSPHRASE_DEFAULT = ''
 BORG_BACKUP_PROD_PATH_NAME = 'BORG_BACKUP_PROD_PATH'
 BORG_BACKUP_PROD_PATH_DEFAULT = '/prod/'
 
+BORG_PRUNE_KEEP_HOURLY_NAME = 'BORG_PRUNE_KEEP_HOURLY'
+BORG_PRUNE_KEEP_HOURLY_DEFAULT = ''
+
 BORG_PRUNE_KEEP_DAILY_NAME = 'BORG_PRUNE_KEEP_DAILY'
 BORG_PRUNE_KEEP_DAILY_DEFAULT = 7
 
 BORG_PRUNE_KEEP_WEEKLY_NAME = 'BORG_PRUNE_KEEP_WEEKLY'
 BORG_PRUNE_KEEP_WEEKLY_DEFAULT = 4
+
+BORG_PRUNE_KEEP_MONTHLY_NAME = 'BORG_PRUNE_KEEP_MONTHLY'
+BORG_PRUNE_KEEP_MONTLY_DEFAULT = ''
 
 BORG_BACKUP_SNAPSHOT_NAME_NAME = 'BORG_BACKUP_SNAPSHOT_NAME'
 BORG_BACKUP_SNAPSHOT_NAME_DEFAULT = 'automatic-{now:%Y-%m-%dT%H:%M:%S}'
@@ -65,12 +72,20 @@ def backup_name():
     return get_or_default(BORG_BACKUP_SNAPSHOT_NAME_NAME, BORG_BACKUP_SNAPSHOT_NAME_DEFAULT)
 
 
-def backup_keep_weekly():
-    return get_or_default(BORG_PRUNE_KEEP_WEEKLY_NAME, BORG_PRUNE_KEEP_WEEKLY_DEFAULT)
+def backup_keep_hourly():
+    return get_or_default(BORG_PRUNE_KEEP_HOURLY_NAME, BORG_PRUNE_KEEP_HOURLY_DEFAULT)
 
 
 def backup_keep_daily():
     return get_or_default(BORG_PRUNE_KEEP_DAILY_NAME, BORG_PRUNE_KEEP_DAILY_DEFAULT)
+
+
+def backup_keep_weekly():
+    return get_or_default(BORG_PRUNE_KEEP_WEEKLY_NAME, BORG_PRUNE_KEEP_WEEKLY_DEFAULT)
+
+
+def backup_keep_monthly():
+    return get_or_default(BORG_PRUNE_KEEP_MONTHLY_NAME, BORG_PRUNE_KEEP_MONTLY_DEFAULT)
 
 
 def instance_name():
@@ -107,17 +122,25 @@ def encryption_passphrase():
 
 def call_in_borg_env(command):
     if encryption_enabled():
-        print("call with BORG_PASSPHRASE set")
-        return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
-    return subprocess.call(command)
+        logging.info("call with BORG_PASSPHRASE set")
+        return subprocess.call(command,
+                               env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()),
+                               stderr=subprocess.STDOUT)
+    return subprocess.call(command,
+                           env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'),
+                           stderr=subprocess.STDOUT)
 
 
 def create_backup():
     param_backup_destination = '{}::{}'.format(backup_path(), backup_name())
     command = ['borg', 'create', param_backup_destination,  prod_path()]
-    print(command)
+    logging.info('command %s', command)
     result = call_in_borg_env(command)
     return result == 0
+
+
+def keep_hourly_param():
+    return '--keep-hourly={}'.format(backup_keep_hourly())
 
 
 def keep_daily_param():
@@ -128,15 +151,32 @@ def keep_weekly_param():
     return '--keep-weekly={}'.format(backup_keep_weekly())
 
 
+def keep_monthly_param():
+    return '--keep-monthly={}'.format(backup_keep_monthly())
+
+
 def prune_backup():
-    command = ['borg', 'prune', '-v', '--list', keep_daily_param(), keep_weekly_param(), backup_path()]
-    print(command)
+    keep_params = []
+    if backup_keep_hourly():
+        keep_params.append(keep_hourly_param())
+    if backup_keep_daily():
+        keep_params.append(keep_daily_param())
+    if backup_keep_weekly():
+        keep_params.append(keep_weekly_param())
+    if backup_keep_monthly():
+        keep_params.append(keep_monthly_param())
+
+    command = ['borg', 'prune', '-v', '--list']
+    command.extend(keep_params)
+    command.append(backup_path())
+
+    logging.info('command %s', command)
     result = call_in_borg_env(command)
     return result == 0
 
 
 def encryption_enabled():
-    print('encryption enabled', (not not encryption_passphrase()) and encryption_passphrase() != '')
+    logging.info('encryption enabled %s', (not not encryption_passphrase()) and encryption_passphrase() != '')
     return (not not encryption_passphrase()) and encryption_passphrase() != ''
 
 
@@ -148,30 +188,37 @@ def init_backup():
 
 
 def init_backup_encrypted():
-    print('try to init encrypted repo')
+    logging.info('try to init encrypted repo')
     command = ['borg', 'init', '--encryption=repokey', backup_path()]
-    print(command)
-    subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
+    logging.info('command %s', command)
+    subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()), stderr=subprocess.STDOUT)
 
 
 def init_backup_cleartext():
-    print('try to init cleartext repo')
+    logging.info('try to init cleartext repo')
     command = ['borg', 'init', '--encryption=none', backup_path()]
-    print(command)
-    subprocess.call(command)
+    logging.info('command %s', command)
+    subprocess.call(command,
+                    env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'),
+                    stderr=subprocess.STDOUT)
 
 
 def get_info():
     command = ['borg list ' + backup_path() + ' --json']
-    print(command)
+    logging.info('command %s', command)
     if encryption_enabled():
         borg_info = subprocess.run(
             command,
             shell=True,
             stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
     else:
-        borg_info = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+        borg_info = subprocess.run(command,
+                                   shell=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT,
+                                   env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
     return json.loads(borg_info.stdout)
 
@@ -223,7 +270,8 @@ def time_command(name, description, command, registry):
 
 
 if __name__ == "__main__":
-    print('triggered by cron')
+    logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
+    logging.info('triggered by cron')
     if is_init_enabled():
         init_backup()
     registry = CollectorRegistry()
@@ -235,4 +283,4 @@ if __name__ == "__main__":
     if is_push_enabled():
         create_info(registry)
         push_to_gateway(pushgateway(), job=jobname(), registry=registry, handler=auth_handler)
-    print('done')
+    logging.info('done')

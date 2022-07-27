@@ -7,7 +7,10 @@ A full example can be found in the example-project folder.
 
 ## Installing
 
-You can pull the image from `sebastianrzk/borg-backup-container` or build it yourself.
+You can pull the image from `sebastianrzk/borg-backup-container` or `sebastianrzk/borg-backup-container-with-ssh` or build it yourself.
+
+* `sebastianrzk/borg-backup-container` this container is for local backups, openssh is not installed.
+* `sebastianrzk/borg-backup-container-with-ssh` is for remote backups. Set your `BORG_BACKUP_PROD_PATH` to the ssh-location and wire your private key with a volume into the container.
 
 An example can be found in the example-project folder.
 
@@ -15,12 +18,16 @@ An example can be found in the example-project folder.
 
 The complete configuration can be done via environment variables.
 
+An example can be found in the example-project folder.
+
 ### Initial repository creation
 
 | parameter                          | default value | explanation                                                                                                                                                                                                                                                                                                                 |
 |------------------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | BORG_BACKUP_AUTO_REPO_INIT_ENABLED | yes           | If the "yes" parameter is set, the backup container tries to create a new repository each time it is run. If a repository already exists, nothing happens. If you want an error if the repository doesn't exist (e.g. on an external mount that isn't currently available), set this to something other than yes, e.g. "no" |
 | BORG_BACKUP_ENCRYPTION_PASSPHRASE  |               | If some passphrase is set, the repository gets created with encryption `repokey` and the provided passphrase                                                                                                                                                                                                                |
+| BORG_BACKUP_PROD_PATH              | `/prod/`      | The location where borg is expecting borg repository. If you want to use the container for a remote backup, use  `sebastianrzk/borg-backup-container-with-ssh` container and set this to your ssh location (e.g. `ssh://username@yourserver/backuppath`)                                                                    | 
+
 
 ### Backup data
 
