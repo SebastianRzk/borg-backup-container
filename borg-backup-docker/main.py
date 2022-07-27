@@ -19,11 +19,17 @@ BORG_BACKUP_ENCRYPTION_PASSPHRASE_DEFAULT = ''
 BORG_BACKUP_PROD_PATH_NAME = 'BORG_BACKUP_PROD_PATH'
 BORG_BACKUP_PROD_PATH_DEFAULT = '/prod/'
 
+BORG_PRUNE_KEEP_HOURLY_NAME = 'BORG_PRUNE_KEEP_HOURLY'
+BORG_PRUNE_KEEP_HOURLY_DEFAULT = ''
+
 BORG_PRUNE_KEEP_DAILY_NAME = 'BORG_PRUNE_KEEP_DAILY'
 BORG_PRUNE_KEEP_DAILY_DEFAULT = 7
 
 BORG_PRUNE_KEEP_WEEKLY_NAME = 'BORG_PRUNE_KEEP_WEEKLY'
 BORG_PRUNE_KEEP_WEEKLY_DEFAULT = 4
+
+BORG_PRUNE_KEEP_MONTHLY_NAME = 'BORG_PRUNE_KEEP_MONTHLY'
+BORG_PRUNE_KEEP_MONTLY_DEFAULT = ''
 
 BORG_BACKUP_SNAPSHOT_NAME_NAME = 'BORG_BACKUP_SNAPSHOT_NAME'
 BORG_BACKUP_SNAPSHOT_NAME_DEFAULT = 'automatic-{now:%Y-%m-%dT%H:%M:%S}'
@@ -66,12 +72,20 @@ def backup_name():
     return get_or_default(BORG_BACKUP_SNAPSHOT_NAME_NAME, BORG_BACKUP_SNAPSHOT_NAME_DEFAULT)
 
 
-def backup_keep_weekly():
-    return get_or_default(BORG_PRUNE_KEEP_WEEKLY_NAME, BORG_PRUNE_KEEP_WEEKLY_DEFAULT)
+def backup_keep_hourly():
+    return get_or_default(BORG_PRUNE_KEEP_HOURLY_NAME, BORG_PRUNE_KEEP_HOURLY_DEFAULT)
 
 
 def backup_keep_daily():
     return get_or_default(BORG_PRUNE_KEEP_DAILY_NAME, BORG_PRUNE_KEEP_DAILY_DEFAULT)
+
+
+def backup_keep_weekly():
+    return get_or_default(BORG_PRUNE_KEEP_WEEKLY_NAME, BORG_PRUNE_KEEP_WEEKLY_DEFAULT)
+
+
+def backup_keep_monthly():
+    return get_or_default(BORG_PRUNE_KEEP_MONTHLY_NAME, BORG_PRUNE_KEEP_MONTLY_DEFAULT)
 
 
 def instance_name():
@@ -109,8 +123,12 @@ def encryption_passphrase():
 def call_in_borg_env(command):
     if encryption_enabled():
         logging.info("call with BORG_PASSPHRASE set")
-        return subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
-    return subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
+        return subprocess.call(command,
+                               env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()),
+                               stderr=subprocess.STDOUT)
+    return subprocess.call(command,
+                           env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'),
+                           stderr=subprocess.STDOUT)
 
 
 def create_backup():
@@ -121,6 +139,10 @@ def create_backup():
     return result == 0
 
 
+def keep_hourly_param():
+    return '--keep-hourly={}'.format(backup_keep_hourly())
+
+
 def keep_daily_param():
     return '--keep-daily={}'.format(backup_keep_daily())
 
@@ -129,8 +151,25 @@ def keep_weekly_param():
     return '--keep-weekly={}'.format(backup_keep_weekly())
 
 
+def keep_monthly_param():
+    return '--keep-monthly={}'.format(backup_keep_monthly())
+
+
 def prune_backup():
-    command = ['borg', 'prune', '-v', '--list', keep_daily_param(), keep_weekly_param(), backup_path()]
+    keep_params = []
+    if backup_keep_hourly():
+        keep_params.append(keep_hourly_param())
+    if backup_keep_daily():
+        keep_params.append(keep_daily_param())
+    if backup_keep_weekly():
+        keep_params.append(keep_weekly_param())
+    if backup_keep_monthly():
+        keep_params.append(keep_monthly_param())
+
+    command = ['borg', 'prune', '-v', '--list']
+    command.extend(keep_params)
+    command.append(backup_path())
+
     logging.info('command %s', command)
     result = call_in_borg_env(command)
     return result == 0
@@ -152,14 +191,16 @@ def init_backup_encrypted():
     logging.info('try to init encrypted repo')
     command = ['borg', 'init', '--encryption=repokey', backup_path()]
     logging.info('command %s', command)
-    subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
+    subprocess.call(command, env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()), stderr=subprocess.STDOUT)
 
 
 def init_backup_cleartext():
     logging.info('try to init cleartext repo')
     command = ['borg', 'init', '--encryption=none', backup_path()]
     logging.info('command %s', command)
-    subprocess.call(command, env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
+    subprocess.call(command,
+                    env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'),
+                    stderr=subprocess.STDOUT)
 
 
 def get_info():
@@ -170,11 +211,13 @@ def get_info():
             command,
             shell=True,
             stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             env=dict(os.environ, BORG_PASSPHRASE=encryption_passphrase()))
     else:
         borg_info = subprocess.run(command,
                                    shell=True,
                                    stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT,
                                    env=dict(os.environ, BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK='yes'))
 
     return json.loads(borg_info.stdout)
