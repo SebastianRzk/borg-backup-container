@@ -7,12 +7,42 @@ A full example can be found in the example-project folder.
 
 ## Installing
 
+### Pulling the image
+
 You can pull the image from `sebastianrzk/borg-backup-container` or `sebastianrzk/borg-backup-container-with-ssh` or build it yourself.
 
 * `sebastianrzk/borg-backup-container` this container is for local backups, openssh is not installed.
 * `sebastianrzk/borg-backup-container-with-ssh` is for remote backups. Set your `BORG_BACKUP_PROD_PATH` to the ssh-location and wire your private key with a volume into the container.
 
 An example can be found in the example-project folder.
+
+### Doing a local backup 
+
+A full example can be found in the example-project folder.
+
+Example paragraph in your docker-compose.yml:
+
+    backup:
+      image: sebastianrzk/borg-backup-container
+      volumes:
+        - your-data-volume-or-bind-mount:/prod/:ro
+        - ./backup_folder:/backup
+      environment:
+        - BORG_BACKUP_CRON=0 * * * *
+      restart: unless-stopped
+
+### Doing a remote (ssh) backup
+
+    backup:
+      image: sebastianrzk/borg-backup-container-with-ssh
+      volumes:
+        - your-data-volume-or-bind-mount:/prod/:ro
+        - your-private-key:/root/.ssh/id_rsa:ro
+        - your-known_hosts:/root/.ssh/known_hosts:ro
+      environment:
+        - BORG_BACKUP_CRON=0 * * * *
+        - BORG_BACKUP_BACKUP_PATH=ssh://your-ssh-server/your-path-on-server
+      restart: unless-stopped
 
 ## Configuration parameter
 
