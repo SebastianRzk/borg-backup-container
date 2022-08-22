@@ -254,8 +254,8 @@ def create_info(registry):
     backup_size = Gauge('borg_backup_folder_size', 'Size of the borg backup repository folder.', registry=registry)
     backup_size.set(get_folder_size(backup_path()))
 
-    prodcution_size = Gauge('borg_production_folder_size', 'Size of the production folder.', registry=registry)
-    prodcution_size.set(get_folder_size(prod_path()))
+    production_size = Gauge('borg_production_folder_size', 'Size of the production folder.', registry=registry)
+    production_size.set(get_folder_size(prod_path()))
 
 
 def time_command(name, description, command, registry):
@@ -275,7 +275,8 @@ if __name__ == "__main__":
     if is_init_enabled():
         init_backup()
     registry = CollectorRegistry()
-    i = Info('instance', instance_name(), registry=registry)
+    i = Info('instance', 'Information about the borg backup container instance.', registry=registry)
+    i.info({'instance_name': instance_name()})
 
     time_command('borg_create_backup_time', 'Seconds used to create the backup.', create_backup, registry)
     time_command('borg_prune_backup_time', 'Seconds used to prune the backup.', prune_backup, registry)
