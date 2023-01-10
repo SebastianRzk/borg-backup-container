@@ -175,6 +175,13 @@ def prune_backup():
     return result == 0
 
 
+def compact_backup():
+    command = ['borg', 'compact', backup_path()]
+    logging.info('command %s', command)
+    result = call_in_borg_env(command)
+    return result == 0
+
+
 def encryption_enabled():
     logging.info('encryption enabled %s', (not not encryption_passphrase()) and encryption_passphrase() != '')
     return (not not encryption_passphrase()) and encryption_passphrase() != ''
@@ -259,7 +266,7 @@ def create_info(registry):
 
 
 def time_command(name, description, command, registry):
-    summary = Summary(name,description, registry=registry)
+    summary = Summary(name, description, registry=registry)
     before = datetime.now()
     result = command()
     if not result:
@@ -280,6 +287,7 @@ if __name__ == "__main__":
 
     time_command('borg_create_backup_time', 'Seconds used to create the backup.', create_backup, registry)
     time_command('borg_prune_backup_time', 'Seconds used to prune the backup.', prune_backup, registry)
+    time_command('borg_compact_backup_time', 'Seconds used to compact the backup.', compact_backup, registry)
 
     if is_push_enabled():
         create_info(registry)
