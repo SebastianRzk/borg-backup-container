@@ -11,6 +11,8 @@ BASH_ENV=/container.env
 $BORG_BACKUP_CRON python3 /main.py
 # This extra line makes it a valid cron" > scheduler.txt;
 
+python3 /main.py --initial-checkup
+
 crontab scheduler.txt;
 crond -f;
 
