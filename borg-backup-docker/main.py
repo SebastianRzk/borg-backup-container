@@ -1,5 +1,6 @@
 import subprocess
 import os
+import sys
 import json
 import socket
 import logging
@@ -51,6 +52,9 @@ BORG_PROMETHEUS_PUSHGATEWAY_USERNAME_DEFAULT = None
 
 BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD_NAME = 'BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD'
 BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD_DEFAULT = None
+
+BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED_NAME = 'BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED'
+BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED_DEFAULT = 'yes'
 
 
 def get_or_default(name, default_value):
@@ -118,6 +122,16 @@ def password():
 
 def encryption_passphrase():
     return get_or_default(BORG_BACKUP_ENCRYPTION_PASSPHRASE, BORG_BACKUP_ENCRYPTION_PASSPHRASE_DEFAULT)
+
+
+def initial_checkup():
+    return "--initial-checkup" in sys.argv
+
+
+def initial_checkup_enabled():
+    return get_or_default(
+        BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED_NAME,
+        BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED_DEFAULT) == 'yes'
 
 
 def call_in_borg_env(command):
@@ -276,20 +290,40 @@ def time_command(name, description, command, registry):
     summary.observe(time_used)
 
 
-if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
+def run_backup():
     logging.info('triggered by cron')
     if is_init_enabled():
         init_backup()
     registry = CollectorRegistry()
     i = Info('instance', 'Information about the borg backup container instance.', registry=registry)
     i.info({'instance_name': instance_name()})
-
     time_command('borg_create_backup_time', 'Seconds used to create the backup.', create_backup, registry)
     time_command('borg_prune_backup_time', 'Seconds used to prune the backup.', prune_backup, registry)
     time_command('borg_compact_backup_time', 'Seconds used to compact the backup.', compact_backup, registry)
-
     if is_push_enabled():
         create_info(registry)
         push_to_gateway(pushgateway(), job=jobname(), registry=registry, handler=auth_handler)
     logging.info('done')
+
+
+def run_initial_checkup():
+    logging.info('running initial checkup')
+    registry = CollectorRegistry()
+    i = Info('instance', 'Information about the borg backup container instance.', registry=registry)
+    i.info({'instance_name': instance_name()})
+    if is_push_enabled():
+        create_info(registry)
+        push_to_gateway(pushgateway(), job=jobname(), registry=registry, handler=auth_handler)
+    logging.info('done')
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s %(message)s',  level=logging.INFO)
+    if initial_checkup():
+        logging.info('Starting on for initial checkup')
+        if initial_checkup_enabled():
+            run_initial_checkup()
+        else:
+            logging.info("Initial checkup disabled")
+    else:
+        run_backup()

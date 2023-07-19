@@ -80,14 +80,15 @@ An example can be found in the example-project folder.
 
 ### Push metrics to prometheus push gateway
 
-| parameter                            | default value                 | explanation                                                                                                 |
-|--------------------------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------|
-| BORG_PROMETHEUS_PUSHGATEWAY_ENABLED  | yes                           | Everything else than "yes" switches the metric collection as well as the push to the prometheus gateway off |
-| BORG_PROMETHEUS_PUSHGATEWAY          | prometheus-pushgateway:9091   | Url of the prometheus push gateway                                                                          |
-| BORG_PROMETHEUS_PUSHGATEWAY_USERNAME | none                          | username used to push to prometheus                                                                         |
-| BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD | none                          | password used to push to prometheus                                                                         |
-| BORG_PROMETHEUS_PUSHGATEWAY_JOBNAME  | push-borg                     | job name that will be pushed to the prometheus gateway                                                      |
-| BORG_INSTANCE_NAME                   | hostname                      | instance name that is pushed to the prometheus gateway                                                      |
+| parameter                               | default value                 | explanation                                                                                                                                                    |
+|-----------------------------------------|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| BORG_PROMETHEUS_PUSHGATEWAY_ENABLED     | yes                           | Everything else than "yes" switches the metric collection as well as the push to the prometheus gateway off                                                    |
+| BORG_PROMETHEUS_INITIAL_CHECKUP_ENABLED | yes                           | Everything else than "yes" switches initial checkup. Initial checkup pushes initial metrics to push gateway on container startup. If the host machine reboots. |
+| BORG_PROMETHEUS_PUSHGATEWAY             | prometheus-pushgateway:9091   | Url of the prometheus push gateway                                                                                                                             |
+| BORG_PROMETHEUS_PUSHGATEWAY_USERNAME    | none                          | username used to push to prometheus                                                                                                                            |
+| BORG_PROMETHEUS_PUSHGATEWAY_PASSWORD    | none                          | password used to push to prometheus                                                                                                                            |
+| BORG_PROMETHEUS_PUSHGATEWAY_JOBNAME     | push-borg                     | job name that will be pushed to the prometheus gateway                                                                                                         |
+| BORG_INSTANCE_NAME                      | hostname                      | instance name that is pushed to the prometheus gateway                                                                                                         |
 
 ## Prometheus metrics
 
