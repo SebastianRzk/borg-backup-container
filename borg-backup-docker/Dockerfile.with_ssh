@@ -2,8 +2,11 @@ FROM alpine
 
 ENV BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 COPY requirements.txt /requirements.txt
-RUN apk add python3 py3-pip borgbackup bash openssh && pip3 install -r /requirements.txt
+RUN apk add python3 py3-pip py3-virtualenv borgbackup bash openssh && \
+    python3 -m venv /venv && \
+    /venv/bin/pip install --upgrade pip && \
+    /venv/bin/pip install -r /requirements.txt
 COPY main.py /main.py
 ADD entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-ENTRYPOINT bash /entrypoint.sh
+ENTRYPOINT ["bash", "/entrypoint.sh"]

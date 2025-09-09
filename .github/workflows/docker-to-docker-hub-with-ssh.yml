@@ -1,4 +1,4 @@
-name: CI to Docker Hub 
+name: CI to Docker Hub with ssh
 
 on:
   push:
@@ -10,38 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - 
-        name: Checkout
-        uses: actions/checkout@v2
-      -       
-        name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-      -     
-        name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-      - 
-        uses: docker/login-action@v1 
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
       -
-        name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
+        name: Build and push bord backup container with ssh
+        id: docker_build_borg-backup-container
+        uses: docker/build-push-action@v6
         with:
           context: ./borg-backup-docker/
           file: ./borg-backup-docker/Dockerfile.with_ssh
-          builder: ${{ steps.buildx.outputs.name }}
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: sebastianrzk/borg-backup-container-with-ssh:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-      -
-        name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/borg-backup-container-with-ssh:latest
